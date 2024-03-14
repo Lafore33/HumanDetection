@@ -7,6 +7,10 @@ from torchvision import transforms, datasets
 from torch.utils.data import DataLoader
 from PIL import Image
 import matplotlib.pyplot as plt
+from model import Model
+from torchsummary import summary
+from torch import nn
+import cv2
 
 
 class ImageDataset(torch.utils.data.Dataset):
@@ -33,7 +37,6 @@ class ImageDataset(torch.utils.data.Dataset):
         with open(label_path, 'r') as file:
             label = file.read().strip()
             label = label.split("\n")
-            #label = [list(map(float, vector[2:].split())) for vector in label]
             label = [np.array(vector[2:].split(), dtype="float64") for vector in label]
 
         return img, label
@@ -45,14 +48,21 @@ val_images_path = "/Users/mikhailkoutun/Downloads/archive/images/val"
 train_labels_path = "/Users/mikhailkoutun/Downloads/archive/labels/train"
 val_labels_path = "/Users/mikhailkoutun/Downloads/archive/labels/val"
 batch_size = 64
-# should it be resized? may be firstly ToTensor and then resize?
-transform = transforms.Compose([
-    transforms.Resize((256, 256)),
-    transforms.ToTensor(),
-])
 
-train_images = ImageDataset(image_root=train_images_path, label_root=train_labels_path, transform=transform)
-val_images = ImageDataset(image_root=val_images_path, label_root=val_labels_path, transform=transform)
-print(train_images[0])
-print(val_images[0])
-#train_dataloader = torch.utils.data.DataLoader(dataset, batch_size=batch_size)
+transforms = transforms.Compose([torchvision.transforms.Grayscale(num_output_channels=3),
+                                 torchvision.transforms.Resize((448, 448)),
+                                 torchvision.transforms.ToTensor()])
+
+train_images = ImageDataset(image_root=train_images_path, label_root=train_labels_path, transform=transforms)
+val_images = ImageDataset(image_root=val_images_path, label_root=val_labels_path, transform=transforms)
+
+train_loader = torch.utils.data.DataLoader(train_images, batch_size=batch_size, shuffle=True)
+model = Model()
+with torch.no_grad():
+    x, y = next(iter(train_loader))
+    print(f'x = {x}')
+    print(f'y_true = {y}')
+    print(f'y_pred = {model(x)}')
+
+# проверка коректности модели
+summary(model, (3, 448, 448), device="cpu")
