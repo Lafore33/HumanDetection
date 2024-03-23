@@ -43,10 +43,10 @@ class CNNBlock(nn.Module):
 
 
 class YOLO(nn.Module):
-    def __init__(self, config, in_channels=3, cells_split=7, num_boxes=2, num_classes=1):
+    def __init__(self, in_channels=3, cells_split=7, num_boxes=2, num_classes=1):
         super(YOLO, self).__init__()
         self.in_channels = in_channels
-        self.architecture = config
+        self.architecture = params
         self.conv_block = self.create_conv_block(self.architecture)
         self.fc_block = self.create_fc_block(cells_split, num_boxes, num_classes)
 
