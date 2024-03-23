@@ -43,19 +43,22 @@ class ImageDataset(torch.utils.data.Dataset):
         label = torch.tensor(np.loadtxt(fname=label_path, delimiter=" ", ndmin=2))
         # the intuition here is that each cell predicts NUM_BOXES, it's the parameter we set ourselves;
         # one box has 5 parameters [probability of box, x, y, width, height] + num_of classes
+
         label_matrix = torch.zeros((self.cells_split, self.cells_split, self.num_boxes * 5 + self.num_classes))
 
         # here we are running through all boxes for one image and deciding which cell it belongs
         for box in label:
             class_label, x, y, height, width = box
             class_label = int(class_label)
+
             # here we get vertical and horizontal number of cells for one particular box
             hc, vc = int(self.cells_split * x), int(self.cells_split * y)
+
             # coordinates with respect to cell
             x_cell, y_cell = self.cells_split * x - hc, self.cells_split * y - vc
             height_cell, width_cell = self.cells_split * height, self.cells_split * width
 
-            # check whether this box for this class is presented the problem here is that model can detect only one
+            # check whether this box for this class is presented; the problem here is that model can detect only one
             # object in a cell, so if we already have object of some class in this cell, we won't add another one
             if label_matrix[vc, hc, self.num_classes] == 0:
                 label_matrix[vc, hc, self.num_classes] = 1
@@ -64,19 +67,3 @@ class ImageDataset(torch.utils.data.Dataset):
                 label_matrix[vc, hc, class_label] = 1
 
         return img, label_matrix
-
-
-train_images_path = "/Users/mikhailkoutun/Downloads/archive/images/train"
-val_images_path = "/Users/mikhailkoutun/Downloads/archive/images/val"
-
-train_labels_path = "/Users/mikhailkoutun/Downloads/archive/labels/train"
-val_labels_path = "/Users/mikhailkoutun/Downloads/archive/labels/val"
-batch_size = 64
-
-transforms = transforms.Compose([torchvision.transforms.Grayscale(num_output_channels=3),
-                                 torchvision.transforms.Resize((448, 448)),
-                                 torchvision.transforms.ToTensor()])
-
-train_images = ImageDataset(image_root=train_images_path, label_root=train_labels_path, transform=transforms)
-val_images = ImageDataset(image_root=val_images_path, label_root=val_labels_path, transform=transforms)
-train_loader = torch.utils.data.DataLoader(train_images, batch_size=batch_size, shuffle=True)
