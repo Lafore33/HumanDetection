@@ -43,3 +43,12 @@ def iou(boxes_pred, true_boxes, mode="midpoint"):
     box2_area = abs((true_box_x2 - true_box_x1) * (true_box_y2 - true_box_y1))
 
     return intersection / (box1_area + box2_area - intersection + epsilon)
+
+
+nums1 = torch.randn(1, 7, 7, 4)
+nums2 = torch.randn(1, 7, 7, 4)
+nums3 = torch.randn(1, 7, 7, 4)
+nums4 = torch.randn(1, 7, 7, 4)
+iou1 = iou(nums1, nums2)
+iou2 = iou(nums3, nums4)
+print(torch.cat((iou1.unsqueeze(0), iou2.unsqueeze(0)), dim=0))
