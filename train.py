@@ -32,7 +32,7 @@ transforms = transforms.Compose([transforms.Grayscale(num_output_channels=3),
 def main():
     model = YOLO().to(DEVICE)
     optimizer = torch.optim.Adam(model.parameters(), lr=LR)
-    loss_function = Loss()
+    loss_function = torch.nn.MSELoss(reduction='sum')
 
     train_dataset = ImageDataset(train_images_path, train_labels_path, transform=transforms)
     val_dataset = ImageDataset(val_images_path, val_labels_path, transform=transforms)

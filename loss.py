@@ -1,4 +1,4 @@
-# file for loss function for the model
+# file for the loss function
 
 import numpy as np
 import torch
@@ -19,12 +19,5 @@ class Loss(nn.Module):
         self.lambda_coord = 5
 
     def forward(self, pred_boxes, true_boxes):
-        epsilon = 1e-6
-        # (N, 7, 7, 11)
-        pred_boxes = pred_boxes.reshape(-1, self.cells, self.cells, self.boxes * 5 + self.classes)
-        # iou's are going to be of the shape of (N, 7, 7, 1)
-        iou1 = iou(pred_boxes[..., 2:6], true_boxes[..., 2:6])
-        iou2 = iou(pred_boxes[..., 7:11], true_boxes[..., 2:6])
-
-
         pass
+
