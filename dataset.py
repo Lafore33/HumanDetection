@@ -56,6 +56,7 @@ class ImageDataset(torch.utils.data.Dataset):
 
             # coordinates with respect to cell
             x_cell, y_cell = self.cells_split * x - hc, self.cells_split * y - vc
+            # ?
             height_cell, width_cell = self.cells_split * height, self.cells_split * width
 
             # check whether this box for this class is presented; the problem here is that model can detect only one
@@ -63,7 +64,12 @@ class ImageDataset(torch.utils.data.Dataset):
             if label_matrix[vc, hc, self.num_classes] == 0:
                 label_matrix[vc, hc, self.num_classes] = 1
                 box_coordinates = torch.tensor([x_cell, y_cell, width_cell, height_cell])
+                # second bbox??
                 label_matrix[vc, hc, self.num_classes + 1: self.num_classes + 5] = box_coordinates
+                # ??
+                label_matrix[vc, hc, 6 + self.num_classes:] = box_coordinates
+                label_matrix[vc, hc, 5 + self.num_classes] = 1
+                #
                 label_matrix[vc, hc, class_label] = 1
 
         return img, label_matrix

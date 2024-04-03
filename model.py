@@ -54,6 +54,7 @@ class YOLO(nn.Module):
         x = self.conv_block(x)
         x = torch.flatten(x, 1)
         x = self.fc_block(x)
+        x = x.reshape(x.shape[0], 7, 7, -1)
         return x
 
     def create_conv_block(self, architecture):
@@ -86,6 +87,5 @@ class YOLO(nn.Module):
             # the idea here is that one cell can predict several bboxes but for only one object,
             # so one cell predicts (two bboxes of size 5 + num_classes) * (cell_split ^ 2)
             # it's current limitation that it cannot predict bboxes for more than one object
-            nn.Linear(496, cells_split * cells_split * (num_classes + num_boxes * 5)),
-            nn.ReLU()
+            nn.Linear(496, cells_split * cells_split * (num_classes + num_boxes * 5))
         )
