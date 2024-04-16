@@ -2,14 +2,13 @@
 
 import numpy as np
 import torch
-from iou import iou
 from torch import nn
 lambda_coord = 5
 lambda_no_obj = 0.5
 
 
 class Loss(nn.Module):
-    def __init__(self, cells=7, boxes=2, classes=1):
+    def __init__(self, cells=7, boxes=1, classes=1):
         super(Loss, self).__init__()
         self.mse = nn.MSELoss(reduction='sum')
         self.cross = nn.CrossEntropyLoss(reduction='sum')
@@ -20,6 +19,7 @@ class Loss(nn.Module):
         self.lambda_coord = 5
 
     def forward(self, pred_boxes, true_boxes):
-        return (self.mse(pred_boxes[self.classes:], true_boxes[self.classes:]) +
-                self.lambda_coord * self.cross(pred_boxes[:self.classes], true_boxes[:self.classes]))
+        # confidence cross/mse?
+        return (self.mse(pred_boxes, true_boxes) +
+                self.cross(pred_boxes[:self.classes], true_boxes[:self.classes]))
 
