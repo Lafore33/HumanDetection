@@ -52,7 +52,7 @@ class YOLO(nn.Module):
 
     def forward(self, x):
         x = self.conv_block(x)
-        x = torch.flatten(x, start_dim=1)
+        x = torch.flatten(x, 1)
         x = self.fc_block(x)
         x = x.reshape(x.shape[0], 7, 7, -1)
         return x
@@ -81,10 +81,7 @@ class YOLO(nn.Module):
         return nn.Sequential(
             nn.Flatten(),
             nn.Linear(1024 * cells_split * cells_split, 496),
-            nn.Dropout(0.2),
+            nn.Dropout(0.5),
             nn.LeakyReLU(0.1),
-            # the idea here is that one cell can predict several bboxes but for only one object,
-            # so one cell predicts (two bboxes of size 5 + num_classes) * (cell_split ^ 2)
-            # it's current limitation that it cannot predict bboxes for more than one object
             nn.Linear(496, cells_split * cells_split * (num_classes + num_boxes * 4))
         )

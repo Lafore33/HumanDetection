@@ -1,63 +1,72 @@
-import torch
-import torchvision.transforms as transforms
-import torch.optim as optim
-import torchvision.transforms.functional as ft
-from torchvision.datasets import ImageFolder
 from tqdm import tqdm
-from torch.utils.data import DataLoader
-from model import YOLO
-from dataset import ImageDataset
-from run import run
-from utils import show_losses
-
-seed = 123
-torch.manual_seed(seed)
-
-LR = 1e-5
-DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
-BATCH_SIZE = 32
-NUM_EPOCHS = 100
+import torch
+from utils import combine_pred, non_max_suppression
 
 
-train_images_path = "/Users/Downloads/HumanDataset/train/images"
-train_labels_path = "/Users/Downloads/HumanDataset/train/labels"
-val_images_path = "/Users/Downloads/HumanDataset/val/images"
-val_labels_path = "/Users/Downloads/HumanDataset/val/labels"
+def train_fn(model, loader, loss_fn, optimizer=None, device='cpu'):
+    loop = tqdm(loader, leave=True)
+    mean_loss = []
+
+    if optimizer is None:
+        model.eval()
+    else:
+        model.train()
+
+    total_loss = 0
+
+    for batch_idx, (x, y) in enumerate(loop):
+        x, y = x.to(device), y.to(device)
+
+        if optimizer is not None:
+            optimizer.zero_grad()
+
+        raw_pred = model(x)
+        loss = loss_fn(raw_pred, y)
+
+        if optimizer is not None:
+            loss.backward()
+            optimizer.step()
+
+        mean_loss.append(loss.item())
+        total_loss += loss.item()
+        loop.set_postfix(loss=loss.item())
+
+    return total_loss / len(mean_loss)
 
 
-transforms = transforms.Compose([transforms.Grayscale(num_output_channels=3),
-                                 transforms.Resize((448, 448)),
-                                 transforms.ToTensor()])
+def get_bboxes(model, loader, iou_threshold, class_threshold, device='cpu'):
+    all_true_boxes = []
+    all_pred_boxes = []
+    train_idx = 0
 
+    model.eval()
 
-def main():
-    model = YOLO().to(DEVICE)
-    optimizer = torch.optim.Adam(model.parameters(), lr=LR)
-    loss_function = torch.nn.MSELoss(reduction='sum')
-    # loss_function = Loss()
+    for batch_idx, (x, y) in enumerate(loader):
+        batch_size = x.size()[0]
+        x, y = x.to(device), y.to(device)
 
-    train_dataset = ImageDataset(train_images_path, train_labels_path, transform=transforms)
-    val_dataset = ImageDataset(val_images_path, val_labels_path, transform=transforms)
+        with torch.no_grad():
+            raw_pred = model(x)
+            pred = combine_pred(raw_pred)
+            y = combine_pred(y)
+            for idx in range(batch_size):
+                nms_boxes = non_max_suppression(pred[idx], iou_threshold, class_threshold)
+                temp = []
 
-    train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True, drop_last=False)
-    val_loader = DataLoader(val_dataset, batch_size=BATCH_SIZE, shuffle=True, drop_last=False)
-    train_loss_hist = []
-    val_loss_hist = []
-    mean_aver_precision = 0
+                for nms_box in nms_boxes:
+                    # boxes for a given batch and image with index = idx
+                    all_pred_boxes.append([train_idx] + nms_box)
 
-    for epoch in range(NUM_EPOCHS):
-        print(mean_aver_precision)
-        import time
-        # time.sleep(10)
-        mean_loss, mean_aver_precision = run(model, train_loader, loss_function, optimizer, DEVICE)
-        train_loss_hist.append(mean_loss)
-        val_mean_loss, val_mean_aver_precision = run(model, val_loader, loss_function, None, DEVICE)
-        val_loss_hist.append(val_mean_loss)
-        show_losses(train_loss_hist, val_loss_hist)
-        path = f'./model{epoch}.pt'
-        torch.save(model.state_dict(), path)
-        time.sleep(20)
+                # plot_image(x[idx].permute(1,2,0).to("cpu"), nms_boxes)
 
+                for box in y[idx]:
+                    if box[0] == 1:
+                        all_true_boxes.append([train_idx] + box)
+                        temp.append(box)
 
-if __name__ == "__main__":
-    main()
+                # plot_image(x[idx].permute(1,2,0).to("cpu"), temp)
+
+                train_idx += 1
+
+    model.train()
+    return all_pred_boxes, all_true_boxes
