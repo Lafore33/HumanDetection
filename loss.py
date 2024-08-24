@@ -35,8 +35,8 @@ class YoloLoss(nn.Module):
         box_predictions = exists_box * predictions[..., 1:5]
         box_targets = exists_box * target[..., 1:5]
 
-        box_predictions[..., 2:4] = torch.sign(box_predictions[..., 2:4]) * torch.sqrt(
-            torch.abs(box_predictions[..., 2:4] + 1e-6))
+        box_predictions[..., 2:4] = (torch.sign(box_predictions[..., 2:4]) *
+                                     torch.sqrt(torch.abs(box_predictions[..., 2:4] + 1e-6)))
         box_targets[..., 2:4] = torch.sqrt(box_targets[..., 2:4])
 
         box_loss = self.mse(box_predictions, box_targets)
