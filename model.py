@@ -1,6 +1,6 @@
 import torch
 from torch import nn
-
+from torchvision.models import resnet50, ResNet50_Weights
 # [out_channels, kernel_size, stride, padding]
 # tuple --> Convolutional Layer
 # "M" --> MaxPooling Layer

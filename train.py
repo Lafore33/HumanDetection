@@ -21,6 +21,7 @@ def train_fn(model, loader, loss_fn, optimizer=None, device='cpu'):
             optimizer.zero_grad()
 
         raw_pred = model(x)
+        print(raw_pred.shape)
         loss = loss_fn(raw_pred, y)
 
         if optimizer is not None:
@@ -68,5 +69,4 @@ def get_bboxes(model, loader, iou_threshold, class_threshold, device='cpu'):
 
                 train_idx += 1
 
-    model.train()
     return all_pred_boxes, all_true_boxes

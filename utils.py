@@ -15,17 +15,17 @@ def convert_to_corners(boxes):
     return x1, y1, x2, y2
 
 
-def intersection_over_union(boxes_predictions, boxes_labels):
+def intersection_over_union(boxes_preds, boxes_labels):
     """
     Calculates intersection over union
 
     Parameters:
-        boxes_predictions (tensor): Predictions of Bounding Boxes (BATCH_SIZE, 4)
+        boxes_preds (tensor): Predictions of Bounding Boxes (BATCH_SIZE, 4)
         boxes_labels (tensor): Correct labels of Bounding Boxes (BATCH_SIZE, 4)
     Returns:
         tensor: Intersection over union for all examples
     """
-    box1_x1, box1_y1, box1_x2, box1_y2 = convert_to_corners(boxes_predictions)
+    box1_x1, box1_y1, box1_x2, box1_y2 = convert_to_corners(boxes_preds)
     box2_x1, box2_y1, box2_x2, box2_y2 = convert_to_corners(boxes_labels)
 
     x1 = torch.max(box1_x1, box2_x1)
@@ -56,7 +56,7 @@ def non_max_suppression(bboxes, iou_threshold, threshold):
         list: bboxes after performing NMS given a specific IoU threshold
     """
 
-    assert isinstance(bboxes, list)
+    assert type(bboxes) == list
 
     bboxes = [box for box in bboxes if box[0] > threshold]
     bboxes = sorted(bboxes, key=lambda x: x[0], reverse=True)
@@ -88,7 +88,7 @@ def plot_image(image, boxes):
     # Display the image
     ax.imshow(im)
 
-    # Create a Rectangle patch
+    # Create a Rectangle potch
     for box in boxes:
         box = box[1:]
         assert len(box) == 4, "Got more values than in x, y, w, h, in a box!"
@@ -131,7 +131,6 @@ def show_losses(train_loss_hist, test_loss_hist=None):
 
 
 def convert_bboxes(pred, s=7):
-
     pred = pred.to('cpu')
     cell_indices = torch.arange(7).repeat(1, 7, 1).unsqueeze(-1)
 
@@ -143,17 +142,17 @@ def convert_bboxes(pred, s=7):
 
 
 def combine_pred(out, s=7):
-
     batch_size = out.shape[0]
     pred = convert_bboxes(out).reshape(batch_size, s * s, -1)
-    all_bboxes = []
-
-    for idx in range(batch_size):
-        bboxes = []
-
-        for bbox_idx in range(s * s):
-            bboxes.append([x.item() for x in pred[idx, bbox_idx, :]])
-
-        all_bboxes.append(bboxes)
+    # all_bboxes = []
+    all_bboxes = pred.numpy().tolist()
+    #
+    # for idx in range(batch_size):
+    #     bboxes = []
+    #
+    #     for bbox_idx in range(s * s):
+    #         bboxes.append([x.item() for x in pred[idx, bbox_idx, :]])
+    #
+    #     all_bboxes.append(bboxes)
 
     return all_bboxes
