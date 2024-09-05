@@ -2,30 +2,11 @@ import torch
 from torch import nn
 
 
-class Loss(nn.Module):
-    def __init__(self):
-        super(Loss, self).__init__()
-        self.mse = nn.MSELoss(reduction="sum")
-        self.cross = nn.CrossEntropyLoss(reduction="sum")
-
-    def forward(self, predictions, target):
-        exist_bbox = target[..., 0:1]
-        object_loss = self.mse(exist_bbox * predictions[..., 1:], target[..., 1:])
-
-        # no_object_loss = self.mse((1 - exist_bbox) * predictions[..., 0:1], target[..., 0:1])
-        class_loss = self.mse(predictions[..., 0:1], target[..., 0:1])
-
-        # no_object_loss = self.mse((1 - exist_bbox) * predictions[..., 1:], target[..., 1:])
-
-        return 5.0 * object_loss + class_loss
-
-
 class YoloLoss(nn.Module):
 
     def __init__(self):
         super(YoloLoss, self).__init__()
         self.mse = nn.MSELoss(reduction="sum")
-        # self.cross = nn.CrossEntropyLoss(reduction="sum")
         self.lambda_no_obj = 0.5
         self.lambda_coord = 5
 
@@ -40,17 +21,15 @@ class YoloLoss(nn.Module):
         box_targets[..., 2:4] = torch.sqrt(box_targets[..., 2:4])
 
         box_loss = self.mse(box_predictions, box_targets)
+
         temp_pred_obj = exists_box * predictions[..., 0:1]
         temp_target_obj = exists_box * target[..., 0:1]
         class_loss = self.mse(temp_pred_obj, temp_target_obj)
-        # no_object_class_loss = self.mse(((1 - exists_box)))
 
         temp_pred = (1 - exists_box) * predictions[..., 0:1]
         temp_target = (1 - exists_box) * target[..., 0:1]
-        no_object_class_loss = self.mse(
-            temp_pred, temp_target
 
-        )
+        no_object_class_loss = self.mse(temp_pred, temp_target)
 
         loss = self.lambda_coord * box_loss + class_loss + self.lambda_no_obj * no_object_class_loss
 

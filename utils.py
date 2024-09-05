@@ -144,15 +144,6 @@ def convert_bboxes(pred, s=7):
 def combine_pred(out, s=7):
     batch_size = out.shape[0]
     pred = convert_bboxes(out).reshape(batch_size, s * s, -1)
-    # all_bboxes = []
     all_bboxes = pred.numpy().tolist()
-    #
-    # for idx in range(batch_size):
-    #     bboxes = []
-    #
-    #     for bbox_idx in range(s * s):
-    #         bboxes.append([x.item() for x in pred[idx, bbox_idx, :]])
-    #
-    #     all_bboxes.append(bboxes)
 
     return all_bboxes
