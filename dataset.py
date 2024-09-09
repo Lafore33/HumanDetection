@@ -22,7 +22,7 @@ class ImageDataset(torch.utils.data.Dataset):
         self.num_classes = num_classes
 
     def __len__(self):
-      return self.size
+        return self.size
 
     def __getitem__(self, idx):
         prefix = f"img{idx}"
